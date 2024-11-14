@@ -12,6 +12,21 @@ pipeline {
     }
     
     stages {
+        stage('Install Maven') {
+            steps {
+                sh '''
+                    if ! command -v mvn &> /dev/null; then
+                        echo "Installing Maven..."
+                        apt-get update
+                        apt-get install -y maven
+                    else
+                        echo "Maven is already installed"
+                        mvn --version
+                    fi
+                '''
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 deleteDir()
