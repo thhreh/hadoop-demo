@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                cleanWs()
+                deleteDir()
                 checkout scm
             }
         }
@@ -74,7 +74,7 @@ pipeline {
     
     post {
         always {
-            cleanWs()
+            deleteDir()
         }
     }
 }
