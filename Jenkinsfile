@@ -12,24 +12,6 @@ pipeline {
     }
     
     stages {
-        stage('Install Maven') {
-            steps {
-                script {
-                    def mvnCheck = sh(script: 'which mvn', returnStatus: true)
-                    if (mvnCheck != 0) {
-                        echo "Installing Maven..."
-                        sh '''
-                            sudo apt-get update
-                            sudo apt-get install -y maven
-                        '''
-                    } else {
-                        echo "Maven is already installed"
-                        sh 'mvn --version'
-                    }
-                }
-            }
-        }
-        
         stage('Checkout') {
             steps {
                 deleteDir()
@@ -37,17 +19,12 @@ pipeline {
             }
         }
         
-        stage('Build JAR') {
-            steps {
-                sh 'mvn clean package'
-            }
-        }
-        
-        stage('SonarQube Analysis') {
+        stage('Build and Analyze') {
             steps {
                 withSonarQubeEnv(installationName: 'SonarQube') { 
                     sh '''
-                        mvn clean verify sonar:sonar \
+                        chmod +x ./mvnw
+                        ./mvnw clean org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar \
                             -Dsonar.projectKey="javawebapp" \
                             -Dsonar.login="admin" \
                             -Dsonar.password="admin"
@@ -61,6 +38,12 @@ pipeline {
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+        
+        stage('Build JAR') {
+            steps {
+                sh './mvnw clean package'
             }
         }
         
