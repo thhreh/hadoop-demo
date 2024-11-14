@@ -1,4 +1,5 @@
 // WordCount.java
+// use this comment to trigger the code change and check
 package com.example.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
