@@ -14,16 +14,19 @@ pipeline {
     stages {
         stage('Install Maven') {
             steps {
-                sh '''
-                    if ! command -v mvn &> /dev/null; then
+                script {
+                    def mvnCheck = sh(script: 'which mvn', returnStatus: true)
+                    if (mvnCheck != 0) {
                         echo "Installing Maven..."
-                        apt-get update
-                        apt-get install -y maven
-                    else
+                        sh '''
+                            sudo apt-get update
+                            sudo apt-get install -y maven
+                        '''
+                    } else {
                         echo "Maven is already installed"
-                        mvn --version
-                    fi
-                '''
+                        sh 'mvn --version'
+                    }
+                }
             }
         }
         
