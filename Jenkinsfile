@@ -20,49 +20,44 @@ pipeline {
       }
     }
         
-        // stage('Quality Gate Check') {
-        //     steps {
-        //         timeout(time: 2, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
-        stage('Submit WordCount Job to Dataproc') {
+        stage('Quality Gate Check') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        
+        stage('Build JAR') {
+            steps {
+                sh './mvnw clean package'
+            }
+        }
+        
+        stage('Upload JAR to GCS') {
             steps {
                 sh '''
-                # Set variables
-                CLUSTER_NAME="hadoop-cluster"
-                REGION="us-central1"
-                GCS_BUCKET="dataproc-staging-jenkins1-441202"
-                # Submit the Hadoop WordCount job
-                gcloud dataproc jobs submit hadoop \
-                    --cluster=${CLUSTER_NAME} \
-                    --region=${REGION} \
-                    --class=org.apache.hadoop.examples.WordCount \
-                    --jars=file:///usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar \
-                    -- gs://${GCS_BUCKET}/input/text_input.txt gs://${GCS_BUCKET}/output/wordcount-output
-                # Wait for the job to finish
-                sleep 10
+                    gsutil cp target/custom-wordcount-1.0-SNAPSHOT.jar gs://${GCS_BUCKET}/jars/
                 '''
             }
         }
         
-        // stage('Submit WordCount Job to Dataproc') {
-        //     steps {
-        //         sh '''
-        //             # Submit the custom WordCount job
-        //             gcloud dataproc jobs submit hadoop \
-        //                 --cluster=${CLUSTER_NAME} \
-        //                 --region=${REGION} \
-        //                 --class=com.example.hadoop.WordCount \
-        //                 --jars=gs://${GCS_BUCKET}/jars/custom-wordcount-1.0-SNAPSHOT.jar \
-        //                 -- gs://${GCS_BUCKET}/input/text_input.txt gs://${GCS_BUCKET}/output/wordcount-output
+        stage('Submit WordCount Job to Dataproc') {
+            steps {
+                sh '''
+                    # Submit the custom WordCount job
+                    gcloud dataproc jobs submit hadoop \
+                        --cluster=${CLUSTER_NAME} \
+                        --region=${REGION} \
+                        --class=com.example.hadoop.WordCount \
+                        --jars=gs://${GCS_BUCKET}/jars/custom-wordcount-1.0-SNAPSHOT.jar \
+                        -- gs://${GCS_BUCKET}/input/text_input.txt gs://${GCS_BUCKET}/output/wordcount-output
                     
-        //             # Wait for the job to finish
-        //             sleep 10
-        //         '''
-        //     }
-        // }
+                    # Wait for the job to finish
+                    sleep 10
+                '''
+            }
+        }
     }
     
     post {
